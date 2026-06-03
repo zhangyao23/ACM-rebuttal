@@ -7,6 +7,7 @@
 \usepackage{booktabs}
 \usepackage{array}
 \usepackage{microtype}
+\usepackage{wrapfig}
 
 \input{cvpr_author_kit/preamble}
 
@@ -113,23 +114,26 @@ Cross-modal task & Qwen2.5-Omni on XD-Violence: Acc +29.33\%, F1 53.50\% $\right
 
 \topic{4. Additional results and revisions.}{QW7C,EaWG,Cbwd,zyZV}
 \q{Q7: Which results are newly added for rebuttal?}{QW7C,EaWG,Cbwd,zyZV}
-\ans We separate new rebuttal-only evidence from submitted experiments. First, a LLaVA-family check supports the trend beyond Qwen while controlling for prompt style: both rows below use the same aggressive prompt, and only the input protocol changes from global-only to full video + retrieved clip.
-\begin{center}
+\ans We separate new rebuttal-only evidence from submitted experiments. First, a LLaVA-family check supports the trend beyond Qwen while controlling for prompt style.
+\par\vspace{-0.25em}
+\begin{wraptable}{r}{0.32\linewidth}
+\vspace{-1.15em}
+\centering
 {\tiny
-\setlength{\tabcolsep}{1.6pt}
-\renewcommand{\arraystretch}{0.84}
+\setlength{\tabcolsep}{0.7pt}
+\renewcommand{\arraystretch}{0.82}
 \begin{tabular}{@{}lccc@{}}
 \toprule
-\textbf{LLaVA-NeXT aggressive} & \textbf{Acc} & \textbf{Recall} & \textbf{FPR} \\
+\textbf{LLaVA-N} & \textbf{Acc} & \textbf{Rec.} & \textbf{FPR} \\
 \midrule
-Global-only baseline & 72.76\% & 43.57\% & 0.00\% \\
+Global & 72.76\% & 43.57\% & 0.00\% \\
 ATR & 77.24\% & 52.86\% & 0.00\% \\
 \bottomrule
 \end{tabular}
 }
-\end{center}
-\tightv
-Thus the gain comes from retrieved evidence under a fixed prompt, not prompt switching. Second, signed-offset diagnostics show a stable direction: non-overlapping Scout candidates fall before the GT core action, with after=0 for 4B/8B/32B. This is unlikely random drift and is consistent with pre-event contextual/precursor evidence; we do not claim causal proof or calibrated localization.
+\vspace{-1.2em}
+\end{wraptable}
+\noindent Both rows use the same aggressive prompt, UCF-290 split, and Yes/No parsing; only the input protocol changes from global-only to full video + retrieved clip. Thus the gain comes from retrieved evidence under a fixed prompt, not prompt switching. Second, signed-offset diagnostics show a stable direction: non-overlapping Scout candidates fall before the GT core action, with after=0 for 4B/8B/32B. This pattern suggests that Scout often retrieves pre-event contextual evidence rather than arbitrary clips; we do not claim causal proof or calibrated localization.
 
 \q{Q8: What will be revised in the paper?}{QW7C,EaWG,2UeC,zyZV}
 \ans We will cite all reviewer-named methods (HAWK, Holmes-VAU, Follow the Rules, VERA, VideoAgent, LITA, VadCLIP) and add a setting table separating training-free/trained, video/frame-level output, temporal annotations, metric, and modality. We will not mix weakly supervised frame-level SOTA with zero-shot video-level ATR as identical settings, but will explain their relation. We will also clarify Figure 2, define LAVAD $t$, separate official UCF-Crime N=290 from full-pool robustness, improve table references, reduce emphasis on ACE, and add limitations on Scout/GT alignment, FPR, backbone dependence, and 32B over-alignment.
