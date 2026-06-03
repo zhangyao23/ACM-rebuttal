@@ -89,6 +89,11 @@ Cross-modal task & Qwen2.5-Omni on XD-Violence: Acc +29.33\%, F1 53.50\% $\right
 \q{Q4: Does video-level accuracy hide whether Scout finds relevant temporal evidence?}{EaWG,Cbwd,zyZV}
 \ans The submitted GT-Scout experiment already probes candidate quality: ideal candidates raise 4B/8B to 95.52\%/91.38\%, showing Sniper headroom. We will not call Scout a calibrated localizer. The new signed-offset diagnostic only interprets whether non-overlapping candidates are before/after the GT core action. We will also clarify 32B failures on concealed categories (e.g., Shoplifting), consistent with over-alignment. Fallback is conservative global-only, not the source of gains.
 
+\vspace{-0.35em}
+{\scriptsize
+\noindent\textit{Offset detail.} Original Scout before/overlap/after = 91.3/8.7/0.0\% (4B), 91.3/8.7/0.0\% (8B), 90.5/9.5/0.0\% (32B); median signed gaps = -17.25s/-17.00s/-21.00s. Expanded events raise overlap to 13.5/13.8/15.8\%, suggesting pre-event contextual/precursor evidence rather than random late retrieval.
+}
+
 \vspace{-0.25em}
 {\tiny
 \noindent\textsuperscript{a}Leviathan et al., Prompt Repetition, 2025.
@@ -127,7 +132,7 @@ ATR & 77.24\% & 52.86\% & 0.00\% \\
 Thus the gain comes from retrieved evidence under a fixed prompt, not prompt switching. Second, signed-offset diagnostics show a stable direction: non-overlapping Scout candidates fall before the GT core action, with after=0 for 4B/8B/32B. This is unlikely random drift and is consistent with pre-event contextual/precursor evidence; we do not claim causal proof or calibrated localization.
 
 \q{Q8: What will be revised in the paper?}{QW7C,EaWG,2UeC,zyZV}
-\ans We will cite all reviewer-named methods (HAWK, Holmes-VAU, Follow the Rules, VERA, VideoAgent, LITA, VadCLIP) and add a setting table separating training-free/trained, video/frame-level output, temporal annotation usage, metric, and modality. We will not mix weakly supervised frame-level SOTA with zero-shot video-level ATR as the same setting. We will also clarify Figure 2, define LAVAD $t$, separate official UCF-Crime N=290 from full-pool robustness, improve table references, and add limitations on Scout/GT alignment, FPR, and 32B over-alignment.
+\ans We will cite all reviewer-named methods (HAWK, Holmes-VAU, Follow the Rules, VERA, VideoAgent, LITA, VadCLIP) and add a setting table separating training-free/trained, video/frame-level output, temporal annotations, metric, and modality. We will not mix weakly supervised frame-level SOTA with zero-shot video-level ATR as identical settings, but will explain their relation. We will also clarify Figure 2, define LAVAD $t$, separate official UCF-Crime N=290 from full-pool robustness, improve table references, reduce emphasis on ACE, and add limitations on Scout/GT alignment, FPR, backbone dependence, and 32B over-alignment.
 
 \paragraph{\textcolor{blue}{Conclusion}}
 We will make the contribution precise: ATR is training-free global-local retrieval for video-level anomaly understanding. The added evidence addresses truncation, Scout reliability, FPR/FNR operating points, backbone scope, and related-work coverage without overstating Scout as a frame-level localizer or ATR as universally model-independent.
