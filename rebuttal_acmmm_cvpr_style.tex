@@ -107,7 +107,7 @@ Cross-modal task & Qwen2.5-Omni on XD-Violence: Acc +29.33\%, F1 53.50\% $\right
 \newpage
 \topic{3. Operating point and model scope.}{QW7C,EaWG,Cbwd,zyZV}
 \q{Q5: Does ATR introduce too many false positives?}{EaWG,zyZV}
-\ans This is a real deployment trade-off. 4B+Minimal reduces FNR from 26.43\% to 11.43\% but increases FPR from 7.33\% to 18.00\%, making it recall-oriented. 8B+Aggressive is more balanced: FNR decreases from 32.14\% to 20.00\%, while FPR stays below 10\% (9.33\%). We will report FPR/FNR together and treat prompt/model choice as a deployment operating point, not a universal optimum. ACE is only a lightweight padding detail, and we will reduce its emphasis.
+\ans This is a real deployment trade-off. 4B+Minimal reduces FNR from 26.43\% to 11.43\% but increases FPR from 7.33\% to 18.00\%, making it recall-oriented; in safety-oriented anomaly screening, missed anomalies are often more costly than false alarms. 8B+Aggressive is more balanced: FNR decreases from 32.14\% to 20.00\%, while FPR stays below 10\% (9.33\%). We will report FPR/FNR together and treat prompt/model choice as a deployment operating point, not a universal optimum. ACE is only a lightweight padding detail, and we will reduce its emphasis.
 
 \q{Q6: Is the result tied to a single VLM?}{QW7C,zyZV}
 \ans We will soften ``VLM-agnostic'' to backbone/alignment-sensitive validation and not assume generic VLM reliability in surveillance videos. Submitted validation covers multiple Qwen-family models and Qwen2.5-Omni on XD-Violence (Acc +29.33\%, F1 53.50\%$\rightarrow$80.63\%), also addressing multimedia fit via an audio-visual VLM setting. We add a non-Qwen LLaVA-family check in Sec. 4.
