@@ -105,9 +105,10 @@ Cross-modal task & Qwen2.5-Omni on XD-Violence: Acc +29.33\%, F1 53.50\% $\right
 }
 
 \newpage
+\enlargethispage{2\baselineskip}
 \topic{3. Operating point and model scope.}{QW7C,EaWG,Cbwd,zyZV}
 \q{Q5: Does ATR introduce too many false positives?}{EaWG,zyZV}
-\ans This is a real deployment trade-off. 4B+Minimal reduces FNR from 26.43\% to 11.43\% but increases FPR from 7.33\% to 18.00\%, making it recall-oriented; in safety-oriented anomaly screening, missed anomalies are often more costly than false alarms. 8B+Aggressive is more balanced: FNR decreases from 32.14\% to 20.00\%, while FPR stays below 10\% (9.33\%). We will report FPR/FNR together and treat prompt/model choice as a deployment operating point, not a universal optimum, and report prompt-specific results rather than hiding prompt sensitivity. ACE is only a lightweight padding detail, and we will reduce its emphasis.
+\ans This is a real deployment trade-off. 4B+Minimal reduces FNR 26.43\%$\rightarrow$11.43\% but raises FPR 7.33\%$\rightarrow$18.00\%, a recall-oriented point; for safety screening, missed anomalies are often costlier than false alarms. 8B+Aggressive is more balanced: FNR 32.14\%$\rightarrow$20.00\%, FPR below 10\% (9.33\%). We will report FPR/FNR and prompt-specific results together, treating prompt/model choice as a deployment operating point, not a universal optimum. ACE is only a lightweight padding detail, and we will reduce its emphasis.
 
 \q{Q6: Is the result tied to a single VLM?}{QW7C,zyZV}
 \ans We will soften ``VLM-agnostic'' to backbone/alignment-sensitive validation and not assume generic VLM reliability in surveillance videos. Submitted validation covers multiple Qwen-family models and Qwen2.5-Omni on XD-Violence (Acc +29.33\%, F1 53.50\%$\rightarrow$80.63\%), also addressing multimedia fit via an audio-visual VLM setting. We add a non-Qwen LLaVA-family check in Sec. 4.
@@ -136,9 +137,9 @@ ATR & 77.24\% & 52.86\% & 0.00\% \\
 \noindent Both rows use the same aggressive prompt, UCF-290 split, and Yes/No parsing; only the input protocol changes from global-only to full video + retrieved clip. Thus the gain comes from retrieved evidence under a fixed prompt, not prompt switching. Second, signed-offset diagnostics show a stable direction: non-overlapping Scout candidates fall before the GT core action, with after=0 for 4B/8B/32B. This pattern suggests that Scout often retrieves pre-event contextual evidence rather than arbitrary clips; we do not claim causal proof or calibrated localization.
 
 \q{Q8: What will be revised in the paper?}{QW7C,EaWG,2UeC,zyZV}
-\ans We will cite all reviewer-named methods and all short-cited supporting papers in the camera-ready related work and bibliography (HAWK, Holmes-VAU, Follow the Rules, VERA, VideoAgent, LITA, VadCLIP) and add a setting table separating training-free/trained, video/frame-level output, temporal annotations, metric, and modality. We will not mix weakly supervised frame-level SOTA with zero-shot video-level ATR as identical settings, but will explain their relation. We will also clarify Figure 2, define LAVAD $t$, separate official UCF-Crime N=290 from full-pool robustness, improve table references, reduce emphasis on ACE, and add limitations on Scout/GT alignment, FPR, backbone dependence, and 32B over-alignment.
+\ans We will cite all reviewer-named and short-cited papers in related work/bibliography (HAWK, Holmes-VAU, Follow the Rules, VERA, VideoAgent, LITA, VadCLIP) and add a setting table by training-free/trained, video/frame-level output, temporal annotations, metric, and modality. We will not mix weakly supervised frame-level SOTA with zero-shot video-level ATR as identical settings, but will explain their relation. We will also clarify Figure 2, define LAVAD $t$, separate official UCF-Crime N=290 from full-pool robustness, improve table references, reduce ACE emphasis, and add limitations on Scout/GT alignment, FPR, backbone dependence, and 32B over-alignment.
 
 \paragraph{\textcolor{blue}{Conclusion}}
-We will make the contribution precise: ATR is training-free global-local retrieval for video-level anomaly understanding. The added evidence addresses truncation, Scout reliability, FPR/FNR operating points, backbone scope, and related-work coverage without overstating Scout as a frame-level localizer or ATR as universally model-independent.
+We will make the contribution precise: ATR is training-free global-local retrieval for video-level anomaly understanding. The added evidence addresses truncation, Scout reliability, FPR/FNR operating points, backbone scope, and related-work coverage without overstating Scout localization or model independence.
 
 \end{document}
