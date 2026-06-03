@@ -1,0 +1,135 @@
+\documentclass[10pt,twocolumn,letterpaper]{article}
+\usepackage[rebuttal]{cvpr_author_kit/cvpr}
+
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{microtype}
+
+\input{cvpr_author_kit/preamble}
+
+\definecolor{ansred}{RGB}{210,0,0}
+\definecolor{cvprblue}{rgb}{0.21,0.49,0.74}
+\usepackage[pagebackref,breaklinks,colorlinks,allcolors=cvprblue]{hyperref}
+
+\newcommand{\rev}[1]{\textcolor{blue}{\textbf{[#1]}}}
+\newcommand{\ans}{\textcolor{ansred}{\textbf{A:}}~}
+\newcommand{\sref}[1]{\textsuperscript{#1}}
+\newcommand{\topic}[2]{\par\noindent{\raggedright\textbf{#1}~\rev{#2}\par}\vspace{0.06em}}
+\newcommand{\q}[2]{\par\noindent{\raggedright\textbf{#1}~\rev{#2}\par}\vspace{-0.24em}\noindent}
+\newcommand{\tightv}{\vspace{-0.45em}}
+\newcount\sidecount
+\newdimen\sidey
+\newcommand{\sideruler}{%
+  \sidecount=1
+  \sidey=.38in
+  \loop
+    \put(\LenToUnit{-16pt},\LenToUnit{-\sidey}){\cvprtenhv\color[rgb]{.5,.5,1}\scriptsize\ifnum\sidecount<10 00\else\ifnum\sidecount<100 0\fi\fi\number\sidecount}%
+    \advance\sidecount by 51
+    \put(\LenToUnit{\textwidth+20pt},\LenToUnit{-\sidey}){\cvprtenhv\color[rgb]{.5,.5,1}\scriptsize\ifnum\sidecount<100 0\fi\number\sidecount}%
+    \advance\sidecount by -51
+    \advance\sidecount by 1
+    \advance\sidey by 12pt
+  \ifnum\sidecount<52
+  \repeat
+}
+
+\setlength{\tabcolsep}{2.0pt}
+\renewcommand{\arraystretch}{0.92}
+
+\def\paperID{3911}
+\def\confName{ACM MM}
+\def\confYear{2026}
+
+\begin{document}
+
+\vspace{-4em}
+\title{Rebuttal for ACM MM Submission 3911: ATR}
+\maketitle
+\thispagestyle{empty}
+\appendix
+\nolinenumbers
+\AddToShipoutPicture{\AtTextUpperLeft{\sideruler}}
+\small
+
+\noindent We thank all reviewers for constructive comments and for recognizing the relevance of long-video anomaly understanding, efficient training-free inference, and global-local retrieval. We organize the response by major concerns, with reviewer IDs shown in brackets.
+
+\topic{1. Coarse-to-fine / truncation.}{QW7C,EaWG,2UeC,zyZV}
+\q{Q1: Is ATR merely prompt engineering or video truncation?}{EaWG,zyZV}
+\ans No. ATR is a two-call protocol, not local-only truncation. Scout first scans the complete video to retrieve candidate anomaly windows. Then Sniper receives two visual inputs together: (i) the same complete original video and (ii) the retrieved short clip cut from that video. Thus full temporal context is still visible in the second call, while the clip only adds a denser evidence view. This is content-relevant intra-video retrieval plus global-local reasoning, not replacing the video by a crop.
+
+\q{Q2: Why is the retrieved second view technically meaningful?}{QW7C,EaWG}
+\ans Google prompt-repetition work shows that, under causal attention, repeating relevant context later can give decoder-only models a low-cost re-reading path or pseudo-bidirectional evidence view, making key evidence easier to attend to; repeating irrelevant context does not help.\sref{a} ATR applies this principle visually: Scout repeats anomaly-relevant evidence as an extra clip while preserving the original video. Clip-Only fails and unrelated clips hurt, so the gain comes from a relevant second visual view, not token volume.
+
+\begin{center}
+{\tiny
+\setlength{\tabcolsep}{1.4pt}
+\renewcommand{\arraystretch}{0.82}
+\begin{tabular}{@{}p{0.31\linewidth}p{0.64\linewidth}@{}}
+\toprule
+\textbf{Concern} & \textbf{Submitted-paper evidence} \\
+\midrule
+Local-only truncation & Clip-Only: 53.10\% Acc / 96.43\% FNR; full ATR: 85.17\% Acc / 11.43\% FNR. \\
+Token volume & Unrelated clip: Acc 71.0\% $\rightarrow$ 59.0\%, FPR 35.7\% $\rightarrow$ 96.4\%. \\
+Scout headroom & GT-ATR reaches 95.52\% / 91.38\% for 4B / 8B. \\
+FPR/FNR trade-off & 4B: -15.00 pp FNR / +10.67 pp FPR; 8B: -12.14 pp FNR / +5.33 pp FPR. \\
+Cross-modal task & Qwen2.5-Omni on XD-Violence: Acc +29.33\%, F1 53.50\% $\rightarrow$ 80.63\%. \\
+\bottomrule
+\end{tabular}
+}
+\end{center}
+\tightv
+
+\topic{2. Metrics and Scout diagnostics.}{EaWG,Cbwd,zyZV}
+\q{Q3: Why not treat VAD only as frame-level temporal localization?}{EaWG,zyZV}
+\ans Frame-AUC, PR-AUC, mAP, and temporal-IoU are natural for frame-level VAD, but prior VAU/VAD evaluation work cautions that ranking metrics alone may miss video-level decision quality, FNR/FPR operating points, semantic explanations, and event-level reasoning.\sref{b,c,d,e} ATR targets training-free video-level anomaly understanding with VLMs, so it outputs video-level decisions and reasoning rather than calibrated frame-level anomaly scores.
+
+\q{Q4: Does video-level accuracy hide whether Scout finds relevant temporal evidence?}{EaWG,Cbwd,zyZV}
+\ans The submitted GT-Scout experiment already probes candidate quality: ideal candidates raise 4B/8B to 95.52\%/91.38\%, showing Sniper headroom. We will not call Scout a calibrated localizer. The new signed-offset diagnostic only interprets whether non-overlapping candidates are before/after the GT core action. We will also clarify 32B failures on concealed categories (e.g., Shoplifting), consistent with over-alignment. Fallback is conservative global-only, not the source of gains.
+
+\vspace{-0.25em}
+{\tiny
+\noindent\textsuperscript{a}Leviathan et al., Prompt Repetition, 2025.
+\textsuperscript{b}Doshi and Yilmaz, Rethinking VAD, 2022.
+\textsuperscript{c}Zhang et al., Holmes-VAU, 2025.
+\textsuperscript{d}Pi et al., VADER, 2026.
+\textsuperscript{e}Chen et al., UCVL, 2025.
+}
+
+\newpage
+\topic{3. Operating point and model scope.}{QW7C,EaWG,Cbwd,zyZV}
+\q{Q5: Does ATR introduce too many false positives?}{EaWG,zyZV}
+\ans This is a real deployment trade-off. 4B+Minimal reduces FNR from 26.43\% to 11.43\% but increases FPR from 7.33\% to 18.00\%, making it recall-oriented. 8B+Aggressive is more balanced: FNR decreases from 32.14\% to 20.00\%, while FPR stays below 10\% (9.33\%). We will report FPR/FNR together and treat prompt/model choice as a deployment operating point, not a universal optimum. ACE is only a lightweight padding detail, and we will reduce its emphasis.
+
+\q{Q6: Is the result tied to a single VLM?}{QW7C,zyZV}
+\ans We will soften ``VLM-agnostic'' to backbone/alignment-sensitive validation and not assume generic VLM reliability in surveillance videos. Submitted validation covers multiple Qwen-family models and Qwen2.5-Omni on XD-Violence (Acc +29.33\%, F1 53.50\%$\rightarrow$80.63\%), also addressing multimedia fit via an audio-visual VLM setting. We add a non-Qwen LLaVA-family check in Sec. 4.
+
+\topic{4. Additional results and revisions.}{QW7C,EaWG,Cbwd,zyZV}
+\q{Q7: Which results are newly added for rebuttal?}{QW7C,EaWG,Cbwd,zyZV}
+\ans We separate new rebuttal-only evidence from submitted experiments. First, a LLaVA-family check supports the trend beyond Qwen while controlling for prompt style: both rows below use the same aggressive prompt, and only the input protocol changes from global-only to full video + retrieved clip.
+\begin{center}
+{\tiny
+\setlength{\tabcolsep}{1.6pt}
+\renewcommand{\arraystretch}{0.84}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+\textbf{LLaVA-NeXT aggressive} & \textbf{Acc} & \textbf{Recall} & \textbf{FPR} \\
+\midrule
+Global-only baseline & 72.76\% & 43.57\% & 0.00\% \\
+ATR & 77.24\% & 52.86\% & 0.00\% \\
+\bottomrule
+\end{tabular}
+}
+\end{center}
+\tightv
+Thus the gain comes from retrieved evidence under a fixed prompt, not prompt switching. Second, signed-offset diagnostics show a stable direction: non-overlapping Scout candidates fall before the GT core action, with after=0 for 4B/8B/32B. This is unlikely random drift and is consistent with pre-event contextual/precursor evidence; we do not claim causal proof or calibrated localization.
+
+\q{Q8: What will be revised in the paper?}{QW7C,EaWG,2UeC,zyZV}
+\ans We will cite all reviewer-named methods (HAWK, Holmes-VAU, Follow the Rules, VERA, VideoAgent, LITA, VadCLIP) and add a setting table separating training-free/trained, video/frame-level output, temporal annotation usage, metric, and modality. We will not mix weakly supervised frame-level SOTA with zero-shot video-level ATR as the same setting. We will also clarify Figure 2, define LAVAD $t$, separate official UCF-Crime N=290 from full-pool robustness, improve table references, and add limitations on Scout/GT alignment, FPR, and 32B over-alignment.
+
+\paragraph{\textcolor{blue}{Conclusion}}
+We will make the contribution precise: ATR is training-free global-local retrieval for video-level anomaly understanding. The added evidence addresses truncation, Scout reliability, FPR/FNR operating points, backbone scope, and related-work coverage without overstating Scout as a frame-level localizer or ATR as universally model-independent.
+
+\end{document}
