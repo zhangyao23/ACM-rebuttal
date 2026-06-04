@@ -22,20 +22,17 @@
 \newcommand{\q}[2]{\par\noindent{\raggedright\textbf{#1}~\rev{#2}\par}\vspace{-0.24em}\noindent}
 \newcommand{\tightv}{\vspace{-0.45em}}
 \newcount\sidecount
-\newdimen\sideyleft
-\newdimen\sideyright
+\newdimen\siderulery
 \newcommand{\sideruler}{%
   \sidecount=1
-  \sideyleft=.69in
-  \sideyright=.38in
+  \siderulery=.38in
   \loop
-    \put(\LenToUnit{-16pt},\LenToUnit{-\sideyleft}){\cvprtenhv\color[rgb]{.5,.5,1}\scriptsize\ifnum\sidecount<10 00\else\ifnum\sidecount<100 0\fi\fi\number\sidecount}%
+    \put(\LenToUnit{-16pt},\LenToUnit{-\siderulery}){\cvprtenhv\color[rgb]{.5,.5,1}\scriptsize\ifnum\sidecount<10 00\else\ifnum\sidecount<100 0\fi\fi\number\sidecount}%
     \advance\sidecount by 52
-    \put(\LenToUnit{\textwidth+20pt},\LenToUnit{-\sideyright}){\cvprtenhv\color[rgb]{.5,.5,1}\scriptsize\ifnum\sidecount<100 0\fi\number\sidecount}%
+    \put(\LenToUnit{\textwidth+20pt},\LenToUnit{-\siderulery}){\cvprtenhv\color[rgb]{.5,.5,1}\scriptsize\ifnum\sidecount<100 0\fi\number\sidecount}%
     \advance\sidecount by -52
     \advance\sidecount by 1
-    \advance\sideyleft by 12pt
-    \advance\sideyright by 12pt
+    \advance\siderulery by 12pt
   \ifnum\sidecount<53
   \repeat
 }
