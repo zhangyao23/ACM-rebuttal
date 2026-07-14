@@ -1,0 +1,80 @@
+\section{Discussion}
+\label{sec:discussion}
+
+\subsection{Efficiency: The ``Framework-for-Compute'' Strategy}
+
+ATR demonstrates that intelligent retrieval can substitute for raw model scale. As shown in Table~\ref{tab:efficiency_compare}, both 4B+ATR and 8B+ATR surpass the 32B Baseline in accuracy while running on a single consumer GPU (RTX 4090) at $\leq$10\% of the 32B's GPU$\cdot$h cost (8$\times$ A100).
+
+\begin{table}[t]
+  \centering
+  \caption{Efficiency: ATR configurations vs.\ 32B Baseline (1$\times$ RTX~4090 unless noted).}
+  \label{tab:efficiency_compare}
+  \resizebox{\columnwidth}{!}{%
+  \begin{tabular}{lccccc}
+    \toprule
+    Config & GPUs & GPU$\cdot$h & s/video & Acc & FNR \\
+    \midrule
+    32B Baseline & 8$\times$ A100 & 92.6 & 22.0 & 83.45\% & 12.86\% \\
+    \textbf{8B+ATR} & 1$\times$ RTX~4090 & \textbf{7.4} & \textbf{14.0} & \textbf{85.52\%} & 20.00\% \\
+    \textbf{4B+ATR} & 1$\times$ RTX~4090 & 9.0 & 17.1 & 85.17\% & \textbf{11.43\%} \\
+    \bottomrule
+  \end{tabular}}
+\end{table}
+
+This gain is not due to token volume. ATR adds only $\sim$5\% input tokens ($\sim$59 tokens) over Baseline (Table~\ref{tab:efficiency}), yet reduces FNR by 12.63\% absolute. This confirms that the performance leap stems from the \textbf{quality of information} (targeted visual content) rather than the quantity of tokens.
+
+\begin{table}[t]
+  \centering
+  \caption{Token overhead (4B+Minimal, full 1900-video run, avg.\ input tokens).}
+  \label{tab:efficiency}
+  \resizebox{\columnwidth}{!}{%
+  \begin{tabular}{lccccc}
+    \toprule
+    Method & Input & Avg Tokens & Acc & FNR & FPR \\
+    \midrule
+    Baseline & $[V,Q]$ & $\sim$1,208 & 84.05\% & 26.95\% & 4.95\% \\
+    Clip-Only & $[V_\text{clip},Q]$ & $\sim$600 & 52.32\% & 95.26\% & 0.11\% \\
+    \textbf{ATR (Ours)} & $[V,V_\text{clip},Q]$ & $\sim$\textbf{1,267} & \textbf{85.26\%} & \textbf{14.32\%} & 15.16\% \\
+    \bottomrule
+  \end{tabular}}
+\end{table}
+
+\subsection{The Over-Alignment Phenomenon}
+\label{sec:over_alignment}
+
+The 32B model exhibits negative ATR gains ($-$0.69\% on the test set; $-$5.68\% on the full 1900-video pool). We analyze this as a \textbf{dual-stage degradation pattern} that is consistent with conservative alignment behavior, while acknowledging that the present experiments do not isolate safety alignment as the sole causal factor~\cite{ouyang2022training}.
+
+\textbf{Scout-stage conservatism.}
+The 32B Scout's failure rate on anomaly videos (30.5\%) consistently exceeds that of 4B (12.8\%) and 8B (3.4\%) under their respective best prompts, with concealed categories most affected (Table~\ref{tab:scout_category}: Shoplifting 56.0\%, RoadAccidents 52.7\%). Yet when Scout \emph{does} succeed, 32B's Sniper de-escalation rate is the \emph{lowest} (7.1\% vs.\ 50.4\%/48.4\% for 4B/8B), indicating a ``candidate conservatism + verification stability'' pattern consistent with, but not uniquely explained by, stronger alignment~\cite{rottger2024xstest,askell2021general}.
+
+\begin{table}[t]
+  \centering
+  \caption{Scout failure rate (\%) by anomaly category under each model's best prompt (full 1900-video evaluation).}
+  \label{tab:scout_category}
+  \resizebox{\columnwidth}{!}{%
+  \begin{tabular}{lccc}
+    \toprule
+    Category & 4B+Min & 8B+Agg & 32B+Neu \\
+    \midrule
+    Shoplifting ($n$=50)     & 24.0 & 0.0  & \textbf{56.0} \\
+    RoadAccidents ($n$=150)  & 23.3 & 7.3  & \textbf{52.7} \\
+    Abuse ($n$=50)           & 18.0 & 2.0  & \textbf{40.0} \\
+    Burglary ($n$=100)       & 8.0  & 1.0  & 34.0 \\
+    Shooting ($n$=50)        & 0.0  & 0.0  & 30.0 \\
+    Stealing ($n$=100)       & 7.0  & 1.0  & 29.0 \\
+    Vandalism ($n$=50)       & 6.0  & 2.0  & 26.0 \\
+    Explosion ($n$=50)       & 12.0 & 8.0  & 24.0 \\
+    Robbery ($n$=150)        & 7.3  & 0.0  & 20.7 \\
+    \bottomrule
+  \end{tabular}}
+\end{table}
+
+\textbf{Sniper-stage close-up conservatism.}
+The GT-anchored ablation (Section~\ref{sec:gt_scout}) reveals a second layer: given perfect temporal windows, 32B's anomaly-video recall \emph{drops} from 87.14\% to 71.43\% (RoadAccidents: 82.61\%$\rightarrow$39.13\%), whereas 4B and 8B dramatically \emph{improve} (4B: 73.57\%$\rightarrow$98.57\%). The 32B model thus under-detects at Scout \emph{and} under-classifies at Sniper, compounding into consistently negative ATR gains. These results highlight a practical tension between safety alignment and domain-specific anomaly perception. Cross-family validation on Qwen3.5-VL (Section~\ref{sec:qwen35}) confirms this pattern extends beyond a single model series.
+
+\label{sec:boundaries}
+\textbf{Applicability boundaries.} These findings converge on three regimes: \textbf{Effective} for selected lightweight-model operating points; \textbf{Diminishing returns} as the baseline saturates through scaling or generational improvement; and \textbf{Adverse} for some larger or conservative models. The positive LLaVA-NeXT result (Section~\ref{sec:llava_validation}) shows that ATR is not tied to one inference interface, but the mixed Qwen3.5 and wider LLaVA-family results rule out a universal model-agnostic claim. ATR is thus a \textbf{compute-efficient strategy for bridging the gap between lightweight and large models}, rather than a universal enhancer.
+
+\subsection{Limitations}
+
+First, Scout is a semantic candidate retriever rather than a calibrated frame-level localizer. Its timestamps frequently precede the official core-action interval (Section~\ref{sec:scout_offset}), and a missed candidate cannot be recovered by Sniper; the global-only fallback is conservative rather than corrective. Second, ATR shifts the FNR/FPR operating point. The 4B configuration prioritizes recall and increases FPR, while the 8B setting is more balanced; both metrics must be reported for deployment. Third, gains depend on prompt style, backbone sensitivity, and alignment. Generic VLM pretraining also leaves a domain gap for low-resolution surveillance footage, so absolute reliability should not be assumed without domain-specific validation. Finally, the full 1{,}900-video result is a video-level robustness analysis only; primary benchmark claims remain on the official 290-video test split.

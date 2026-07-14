@@ -1,0 +1,11 @@
+\begin{abstract}
+Long-video anomaly understanding requires broad scene context and sensitivity to brief, sparse event evidence, yet a single uniformly sampled view can underemphasize the moments that determine the final decision.
+We introduce \textit{A}nomaly-\textit{T}argeted \textit{R}etrieval (\textit{ATR}), a training-free selective re-reading framework.
+Scout first searches the complete video for candidate evidence; Sniper then jointly receives the same complete video and the retrieved clip, preserving global context while adding a denser second view without parameter updates or target-task temporal supervision.
+On the official UCF-Crime test set, ATR raises a 4B model to 85.17\% accuracy and reduces its false-negative rate from 26.43\% to 11.43\%.
+An 8B configuration reaches 85.52\% accuracy with 9.33\% false-positive rate, outperforming a 32B global-only baseline at about one tenth of its GPU-hour cost.
+Compute- and content-matched controls show that a second global call alone provides no gain, while Scout significantly outperforms duration-matched Random and Uniform clips in the 4B setting.
+Removing the retrieved view reverses all analyzed rescued decisions, confirming that the final prediction uses the selected evidence.
+Together, these results establish content-aware global--local retrieval as a practical and efficient inference strategy for long-video anomaly understanding.
+\end{abstract}
+    

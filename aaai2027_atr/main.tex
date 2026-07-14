@@ -1,0 +1,380 @@
+%% AAAI-27 anonymous submission working source.
+\documentclass[letterpaper]{article}
+\usepackage[submission]{aaai2027}
+\usepackage[hyphens]{url}
+\usepackage{graphicx}
+\urlstyle{rm}
+\def\UrlFont{\rm}
+\usepackage{natbib}
+\usepackage{caption}
+\frenchspacing
+
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{xcolor}
+
+\pdfinfo{
+/TemplateVersion (2027.1)
+}
+
+\setcounter{secnumdepth}{1}
+\graphicspath{{figures/}}
+
+\title{Anomaly-Targeted Retrieval: Selective Re-Reading for Training-Free Long-Video Anomaly Understanding}
+\author{Anonymous Submission}
+\affiliations{}
+
+\begin{document}
+
+\maketitle
+
+\input{sections/abstract}
+
+%% ============================================================
+%% MAIN CONTENT
+%% ============================================================
+
+\input{sections/introduction}
+
+\input{sections/related_work}
+
+\input{sections/methodology}
+
+\input{sections/experiments}
+
+\input{sections/ablation}
+
+\input{sections/discussion}
+
+\input{sections/conclusion}
+
+\appendix
+\section{Method details}
+% \section{Full Prompt Texts}
+\label{sec:appendix_prompts}
+
+This section provides the complete prompt texts used in our experiments. Three prompt strategies are evaluated: \textbf{Minimal}, \textbf{Aggressive}, and \textbf{Neutral}. Each strategy defines prompts for three modules: Baseline (global-only inference), Scout (temporal scanning), and Sniper (dual-view reasoning).
+
+\subsection{Separator Texts (Sniper Input Construction)}
+
+When constructing the Sniper's dual-view input, two separator texts are inserted between the video sources:
+
+\begin{small}
+\begin{verbatim}
+[Sep_1] SOURCE 1: Global Context (Low FPS).
+Use this ONLY to understand the setting
+(e.g., store, street).
+
+[Sep_2] SOURCE 2: Local Detail (High FPS,
+Focused Clip). This clip contains the
+CRITICAL MOMENT.
+\end{verbatim}
+\end{small}
+
+\subsection{Minimal Strategy}
+
+\subsubsection{Baseline Prompt (Minimal)}
+\begin{small}
+\begin{verbatim}
+Is there any anomalous event or security
+concern in this video?
+
+Answer: Yes or No.
+\end{verbatim}
+\end{small}
+
+\subsubsection{Scout Prompt (Minimal)}
+\begin{small}
+\begin{verbatim}
+Analyze the entire video. Identify all
+potential anomalies or suspicious events.
+For each, provide:
+- start and end timestamps (MM:SS)
+- brief reason
+- confidence (high/medium/low)
+
+Return JSON:
+[{"start":"MM:SS","end":"MM:SS",
+  "reason":"...","confidence":"high"}]
+
+If nothing suspicious, return: []
+\end{verbatim}
+\end{small}
+
+\subsubsection{Sniper Prompt (Minimal)}
+\begin{small}
+\begin{verbatim}
+Based on the two video sources provided:
+Is there any anomalous event or security
+concern?
+
+Answer: Yes or No.
+\end{verbatim}
+\end{small}
+
+\subsection{Aggressive Strategy}
+
+\subsubsection{Baseline Prompt (Aggressive)}
+\begin{small}
+\begin{verbatim}
+You are a surveillance video analyst.
+Carefully watch the entire video and
+determine whether it contains any
+anomalous or criminal activity.
+
+Consider these categories: Abuse, Arrest,
+Arson, Assault, Burglary, Explosion,
+Fighting, Road Accidents, Robbery,
+Shooting, Shoplifting, Stealing,
+Vandalism.
+
+Provide your analysis:
+1. Describe what you observe
+2. Identify any suspicious activities
+3. Final answer: "Answer: Yes" or
+   "Answer: No"
+
+Important: Even subtle or brief anomalies
+should be flagged. Err on the side of
+caution.
+\end{verbatim}
+\end{small}
+
+\subsubsection{Scout Prompt (Aggressive)}
+\begin{small}
+\begin{verbatim}
+You are a surveillance video analyst
+performing temporal anomaly scanning.
+
+Watch the ENTIRE video carefully and
+identify ALL segments that contain or
+suggest anomalous activity. Be thorough
+and flag even subtle suspicious moments.
+
+For each suspicious segment, provide:
+- Precise start and end timestamps (MM:SS)
+- Detailed description of the anomaly
+- Confidence level (high/medium/low)
+- Anomaly category if identifiable
+
+Return as JSON array:
+[{"start":"MM:SS","end":"MM:SS",
+  "reason":"detailed description",
+  "confidence":"high/medium/low",
+  "category":"optional category"}]
+
+If genuinely nothing suspicious: []
+
+IMPORTANT: It is better to over-report
+than to miss a real anomaly.
+\end{verbatim}
+\end{small}
+
+\subsubsection{Sniper Prompt (Aggressive)}
+\begin{small}
+\begin{verbatim}
+You are a surveillance video analyst
+performing focused anomaly verification.
+
+You are given TWO video sources:
+- SOURCE 1: Full video (global context)
+- SOURCE 2: A specific clip flagged as
+  potentially anomalous
+
+Your task:
+1. Use SOURCE 1 to understand the overall
+   scene and context
+2. Carefully examine SOURCE 2 for any
+   anomalous or criminal activity
+3. Consider: Abuse, Arrest, Arson,
+   Assault, Burglary, Explosion, Fighting,
+   Road Accidents, Robbery, Shooting,
+   Shoplifting, Stealing, Vandalism
+
+Provide your analysis:
+1. Scene context from SOURCE 1
+2. Detailed analysis of SOURCE 2
+3. Final verdict: "Answer: Yes" or
+   "Answer: No"
+
+Important: Even subtle anomalies should
+be flagged. The clip was pre-selected as
+suspicious -- examine it carefully.
+\end{verbatim}
+\end{small}
+
+\subsection{Neutral Strategy}
+
+\subsubsection{Baseline Prompt (Neutral)}
+\begin{small}
+\begin{verbatim}
+Watch this video and determine whether it
+contains any anomalous event.
+
+Provide a brief explanation of your
+reasoning, then give your final answer.
+
+Answer: Yes or No.
+\end{verbatim}
+\end{small}
+
+\subsubsection{Scout Prompt (Neutral)}
+\begin{small}
+\begin{verbatim}
+Watch the video and identify any segments
+that may contain unusual or anomalous
+events.
+
+For each segment found, provide:
+- Start and end timestamps (MM:SS)
+- Brief description
+- Confidence (high/medium/low)
+
+Format as JSON:
+[{"start":"MM:SS","end":"MM:SS",
+  "reason":"...","confidence":"..."}]
+
+If no anomalies detected: []
+\end{verbatim}
+\end{small}
+
+\subsubsection{Sniper Prompt (Neutral)}
+\begin{small}
+\begin{verbatim}
+You are given two video sources of the
+same scene:
+- Source 1: The full video for context
+- Source 2: A specific segment for closer
+  examination
+
+Based on both sources, determine whether
+the scene contains any anomalous event.
+
+Explain your reasoning briefly, then
+provide your answer.
+
+If the activity is clearly normal and
+appears normal.
+
+Constraint: Answer strictly with 'Yes'
+or 'No'.
+\end{verbatim}
+\end{small}
+
+%% ============================================================
+%% Appendix B: Cross-Family Comparison Table
+%% ============================================================
+\section{Additional Results}
+\subsection{Cross-Family Model Comparison}
+\label{sec:appendix_cross_family}
+
+Table~\ref{tab:supp_cross_family} summarizes the per-model best ATR configuration across both Qwen3-VL and Qwen3.5-VL families, consolidating results from the main paper's Tables 5 and 7.
+
+\begin{table}[h]
+  \centering
+  \caption{Cross-family comparison: per-model best ATR configuration on UCF-Crime ($N$=290).}
+  \label{tab:supp_cross_family}
+  \resizebox{\columnwidth}{!}{%
+  \begin{tabular}{llcccccc}
+    \toprule
+    Family & Model & Best Prompt & BL Acc & ATR Acc & $\Delta$ Acc & BL FNR & ATR FNR \\
+    \midrule
+    Qwen3-VL & 4B & Minimal & 83.45\% & \textbf{85.17\%} & \textbf{+1.72\%} & 26.43\% & \textbf{11.43\%} \\
+    Qwen3-VL & 8B & Aggressive & 82.41\% & \textbf{85.52\%} & \textbf{+3.11\%} & 32.14\% & \textbf{20.00\%} \\
+    Qwen3-VL & 32B & Neutral & 83.45\% & 82.76\% & $-$0.69\% & 12.86\% & 16.43\% \\
+    Qwen3.5 & 9B & Neutral & 82.41\% & \textbf{85.52\%} & \textbf{+3.10\%} & 33.57\% & \textbf{21.43\%} \\
+    Qwen3.5 & 27B & Aggressive & 84.48\% & 82.07\% & $-$2.41\% & 16.43\% & 19.29\% \\
+    \bottomrule
+  \end{tabular}}
+\end{table}
+
+The table reveals a consistent pattern: lightweight models ($\leq$9B) benefit from ATR with +1.72\% to +3.11\% accuracy gains, while larger models (32B, 27B) exhibit negative returns. This pattern persists across model generations, confirming that the diminishing-returns phenomenon is not specific to a single model family.
+
+\subsection{LLaVA-Family Prompt Sweep}
+\label{sec:appendix_llava}
+
+Table~\ref{tab:llava_full} reports the full protocol-aligned sweep across LLaVA-NeXT, Video-LLaVA~\cite{lin2024video}, and VideoLLaMA3~\cite{zhang2025videollama3}. Every run uses the UCF-Crime standard test set ($N$=290), fixed 8-frame sampling, deterministic decoding, and the same prompt within each Baseline/ATR pair; all runs completed 290 predictions without report errors.
+
+\begin{table*}[t]
+  \centering
+  \scriptsize
+  \caption{Full LLaVA-family prompt sweep on UCF-Crime ($N$=290). LLaVA-NeXT-Video-7B-Qwen2 uses a LLaVA-family video architecture with a Qwen2 language backbone.}
+  \label{tab:llava_full}
+  \begin{tabular}{lllccccc}
+    \toprule
+    Model & Prompt & Method & Acc & Recall & F1 & FPR & FNR \\
+    \midrule
+    \multirow{6}{*}{LLaVA-NeXT-Video-7B-Qwen2}
+      & Minimal & Baseline & 74.14\% & 46.43\% & 63.41\% & 0.00\% & 53.57\% \\
+      & Minimal & ATR      & 74.14\% & 46.43\% & 63.41\% & 0.00\% & 53.57\% \\
+      & Neutral & Baseline & 69.31\% & 36.43\% & 53.40\% & 0.00\% & 63.57\% \\
+      & Neutral & ATR      & 69.66\% & 37.14\% & 54.17\% & 0.00\% & 62.86\% \\
+      & Aggressive & Baseline & 72.76\% & 43.57\% & 60.70\% & 0.00\% & 56.43\% \\
+      & Aggressive & \textbf{ATR} & \textbf{77.24\%} & \textbf{52.86\%} & \textbf{69.16\%} & 0.00\% & \textbf{47.14\%} \\
+    \midrule
+    \multirow{6}{*}{Video-LLaVA-7B}
+      & Minimal & Baseline & 51.72\% & 0.00\% & 0.00\% & 0.00\% & 100.00\% \\
+      & Minimal & ATR      & 47.59\% & 11.43\% & 17.39\% & 18.67\% & 88.57\% \\
+      & Neutral & Baseline & 54.48\% & 5.71\% & 10.81\% & 0.00\% & 94.29\% \\
+      & Neutral & ATR      & 52.76\% & 49.29\% & 50.18\% & 44.00\% & 50.71\% \\
+      & Aggressive & Baseline & 58.28\% & 13.57\% & 23.90\% & 0.00\% & 86.43\% \\
+      & Aggressive & ATR      & 56.90\% & 17.14\% & 27.75\% & 6.00\% & 82.86\% \\
+    \midrule
+    \multirow{6}{*}{VideoLLaMA3-7B}
+      & Minimal & Baseline & 50.00\% & 0.00\% & 0.00\% & 3.33\% & 100.00\% \\
+      & Minimal & ATR      & 50.00\% & 0.00\% & 0.00\% & 3.33\% & 100.00\% \\
+      & Neutral & Baseline & 52.07\% & 0.71\% & 1.42\% & 0.00\% & 99.29\% \\
+      & Neutral & ATR      & 52.41\% & 1.43\% & 2.82\% & 0.00\% & 98.57\% \\
+      & Aggressive & Baseline & 52.76\% & 2.14\% & 4.20\% & 0.00\% & 97.86\% \\
+      & Aggressive & ATR      & 54.14\% & 5.00\% & 9.52\% & 0.00\% & 95.00\% \\
+    \bottomrule
+  \end{tabular}
+\end{table*}
+
+The sweep separates protocol transfer from universal effectiveness. LLaVA-NeXT benefits most under Aggressive, while its Minimal Scout returns no candidates and therefore matches the Baseline. Video-LLaVA exhibits a strong recall--FPR trade-off, and VideoLLaMA3 remains highly conservative. These results motivate the framework- and alignment-sensitive scope used in the main paper.
+
+%% ============================================================
+%% Appendix C: Prompt-Model Interaction Heatmap
+%% ============================================================
+\subsection{Prompt-Model Interaction Analysis}
+\label{sec:appendix_heatmap}
+
+%% TODO: Replace with the redesigned heatmap figure
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\columnwidth]{fig_prompt_model_heatmap.pdf}
+  \caption{Prompt-model interaction heatmap. (a) Accuracy delta ($\Delta$Acc) and (b) FNR delta ($\Delta$FNR) for each model-prompt combination. In the evaluated Qwen settings, 4B prefers Minimal, 8B prefers Aggressive, and Neutral is consistently weaker.}
+  \label{fig:supp_heatmap}
+\end{figure}
+
+Figure~\ref{fig:supp_heatmap} visualizes the prompt-model interaction across all configurations. Key observations:
+
+\begin{itemize}
+  \item \textbf{4B models prefer Minimal prompts}: concise instructions yield the best accuracy and FNR improvements, suggesting that smaller models benefit from reduced instruction complexity.
+  \item \textbf{8B models prefer Aggressive prompts}: detailed, category-aware instructions help mid-scale models leverage their stronger reasoning capabilities.
+  \item \textbf{Neutral is weaker in the evaluated Qwen settings}: the middle-ground strategy fails to match either extreme, indicating that prompt design for ATR benefits from deliberate calibration rather than compromise.
+\end{itemize}
+
+%% ============================================================
+%% Appendix D: Main Result Visualization
+%% ============================================================
+\subsection{Additional Visualization}
+\label{sec:appendix_main_result}
+
+Figure~\ref{fig:main_result_supp} provides a visual summary of the main results on UCF-Crime ($N$=290). Three key observations emerge: (1)~ATR consistently improves accuracy over Baseline for both 4B and 8B configurations, with both surpassing the 32B Baseline (dashed line); (2)~the primary source of ATR's gain is FNR reduction -- 4B+Minimal drops from 26.4\% to 11.4\%, recovering anomalies that Baseline misses due to attention dilution; (3)~Clip-Only suffers catastrophic FPR inflation (96.4\% for 4B), confirming that local evidence without global context leads to systematic over-prediction.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\columnwidth]{fig_main_result.pdf}
+  \caption{Main result comparison: Accuracy, FNR, and FPR for Baseline, Clip-Only, and ATR across two primary configurations (4B+Minimal, 8B+Aggressive) with 32B Baseline as reference (UCF-Crime, $N$=290).}
+  \label{fig:main_result_supp}
+\end{figure}
+
+\bibliography{references}
+
+% Complete and enable the official checklist before submission.
+% \input{ReproducibilityChecklist.tex}
+
+\end{document}

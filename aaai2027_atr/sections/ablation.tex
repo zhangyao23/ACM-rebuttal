@@ -1,0 +1,163 @@
+\section{Ablation Studies}
+\label{sec:ablation}
+
+\subsection{Module Effectiveness Ablation}
+\label{sec:module_ablation}
+
+\begin{table}[h]
+  \small
+  \centering
+  \caption{Module ablation (UCF-Crime standard test set, $N$=290).}
+  \label{tab:module_ablation}
+  \begin{tabular}{llcccc}
+    \toprule
+    Config & Setting & Scout & Global & Acc & FNR \\
+    \midrule
+    \multirow{3}{*}{4B+Min} & A: Clip-Only & \checkmark & $\times$ & 53.10\% & 96.43\% \\
+    & B: Baseline & $\times$ & \checkmark & 83.45\% & 26.43\% \\
+    & \textbf{C: ATR (Full)} & \checkmark & \checkmark & \textbf{85.17\%} & \textbf{11.43\%} \\
+    \midrule
+    \multirow{3}{*}{8B+Agg} & A: Clip-Only & \checkmark & $\times$ & 71.03\% & 53.57\% \\
+    & B: Baseline & $\times$ & \checkmark & 82.41\% & 32.14\% \\
+    & \textbf{C: ATR (Full)} & \checkmark & \checkmark & \textbf{85.52\%} & \textbf{20.00\%} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\textbf{Analysis}: Full ATR outperforms both Clip-Only and Baseline across all configurations,
+confirming the necessity of dual-view fusion. Padding-direction robustness is reported separately in Table~\ref{tab:ace_ablation}; the performance gain is driven by the Scout--Sniper retrieval mechanism rather than a particular padding direction.
+Critically, the gain is not attributable to token volume alone.
+To isolate the source of improvement, we conduct a controlled input content ablation (Table~\ref{tab:input_content}) on 100 videos where Scout produced candidates (72 anomaly + 28 normal, 4B+Minimal).
+All groups share the same global video, Sniper prompt, and separators; only Source~2 differs, with \textbf{duration matched} to the original Scout clip ($\sim$$L+\delta$ tokens each).
+
+\begin{table}[t]
+  \centering
+  \caption{Input content ablation (4B+Minimal, 100 videos where Scout triggered: 72 anomaly + 28 normal). Only Source~2 content varies; global video, prompt, and token budget ($L+\delta$) are held constant.}
+  \label{tab:input_content}
+  \resizebox{\columnwidth}{!}{%
+  \begin{tabular}{llcccc}
+    \toprule
+    Group & Source~2 Content & Acc$\uparrow$ & FNR$\downarrow$ & FPR$\downarrow$ \\
+    \midrule
+    A: Baseline & None (global only) & 71.0\% & 26.4\% & 35.7\% \\
+    B: Unrelated & Different video, different category & 59.0\% & 19.4\% & 96.4\% \\
+    C: Wrong Segment & Same-video non-Scout segment & 70.0\% & 2.8\% & 100.0\% \\
+    \textbf{D: ATR (Ours)} & \textbf{Scout-retrieved candidate clip} & \textbf{72.0\%} & \textbf{1.4\%} & 96.4\% \\
+    \bottomrule
+  \end{tabular}}
+\end{table}
+
+Cross-video noise~(B) degrades accuracy by 12.0 points relative to Baseline, showing that added visual tokens alone do not explain the gain. The same-video wrong segment~(C) also fails to improve accuracy and drives FPR to 100.0\%, directly distinguishing ATR from arbitrary truncation. The Scout-retrieved clip~(D) gives the best accuracy and lowest FNR in this candidate-triggered subset. Because conditioning on Scout activation changes the class distribution and all local-view variants are recall-oriented, these FPR values are not deployment operating points; the complete 290-video FPR/FNR results are reported in Table~\ref{tab:main}.
+
+\subsection{Temporal Context Padding Robustness}
+\label{sec:ace_ablation}
+
+\begin{table}[h]
+  \centering
+  \caption{Equal-budget temporal context padding on the frozen paired subset ($N=178$; 89 anomaly and 89 normal videos). All conditions reuse the same Scout candidates. Entries are balanced accuracy.}
+  \label{tab:ace_ablation}
+  \resizebox{\columnwidth}{!}{%
+  \begin{tabular}{lcccc}
+    \toprule
+    Model & $0/0$ & $6/6$ & $10/2$ & $2/10$ \\
+    \midrule
+    4B+Min & 89.89\% & 90.45\% & \textbf{91.01\%} & \textbf{91.01\%} \\
+    8B+Agg & 91.01\% & 91.57\% & \textbf{92.70\%} & \textbf{92.70\%} \\
+    \bottomrule
+  \end{tabular}}
+\end{table}
+
+\textbf{Analysis}:
+Table~\ref{tab:ace_ablation} reports pre/post padding in seconds. The equal-budget $10/2$ and $2/10$ conditions are identical for both model scales, and their differences from $6/6$ are not statistically significant. We retain $10/2$ only as the frozen implementation setting; ATR does not rely on an asymmetric temporal mechanism.
+
+
+\subsection{Prompt Strategy Ablation}
+\label{sec:prompt_ablation}
+
+\begin{table}[h]
+  \centering
+  \caption{Prompt strategy ablation (ATR, full 1900-video evaluation).}
+  \label{tab:prompt_ablation}
+  \resizebox{\columnwidth}{!}{%
+  \begin{tabular}{llcccccc}
+    \toprule
+    Model & Prompt & Acc & Prec & Rec & F1 & FPR & FNR \\
+    \midrule
+    4B & Aggressive & 83.32\% & 94.39\% & 70.84\% & 80.94\% & 4.21\% & 29.16\% \\
+    4B & \textbf{Minimal} & \textbf{85.26\%} & 84.97\% & \textbf{85.68\%} & \textbf{85.32\%} & 15.16\% & \textbf{14.32\%} \\
+    4B & Neutral & 69.05\% & 99.18\% & 38.42\% & 55.39\% & 0.32\% & 61.58\% \\
+    \midrule
+    8B & \textbf{Aggressive} & \textbf{85.00\%} & \textbf{89.35\%} & \textbf{79.47\%} & \textbf{84.12\%} & 9.47\% & \textbf{20.53\%} \\
+    8B & Minimal & 75.68\% & 75.21\% & 76.63\% & 75.91\% & 25.26\% & 23.37\% \\
+    8B & Neutral & 69.26\% & 99.46\% & 38.74\% & 55.76\% & 0.21\% & 61.26\% \\
+    \midrule
+    32B & Minimal & 79.58\% & 83.37\% & 73.89\% & 78.35\% & 14.74\% & 26.11\% \\
+    32B & Aggressive & 76.74\% & 71.67\% & 88.42\% & 79.17\% & 34.95\% & 11.58\% \\
+    32B & \textbf{Neutral} & \textbf{80.58\%} & \textbf{94.76\%} & 64.74\% & \textbf{76.92\%} & \textbf{3.58\%} & 35.26\% \\
+    \bottomrule
+  \end{tabular}}
+\end{table}
+
+\textbf{Analysis}: Prompt effects are strongly model-dependent. The 4B model performs best with Minimal, while the 8B model performs best with Aggressive; Neutral is highly conservative for both lightweight models. These differences should not be interpreted as a universal scale law. Instead, prompt style changes the recall--FPR operating point and must be reported together with the model choice. For each lightweight model ($\leq$8B), at least one prompt yields a positive ATR gain over its matched Baseline, but the selected operating point remains deployment-specific.
+
+\subsection{GT-Anchored Scout: Upper-Bound Analysis of Sniper}
+\label{sec:gt_scout}
+
+To disentangle the contributions of the Scout and Sniper stages, we replace Scout's output with \textbf{ground-truth temporal annotations}, providing Sniper with perfect anomaly windows. This yields an upper-bound estimate of ATR's potential if Scout were ideal, and directly measures Sniper's standalone reasoning quality.
+
+For the 140 anomaly videos, we supply GT time intervals to Sniper; for the 150 normal videos, no GT clip exists, so GT-ATR reduces to Baseline.
+
+\begin{table}[t]
+  \centering
+  \caption{GT-Anchored Scout: Baseline vs.\ Scout-ATR vs.\ GT-ATR on UCF-Crime ($N$=290: 140 anomaly + 150 normal). GT-ATR shares TN/FP with Baseline on normal videos.}
+  \label{tab:gt_scout}
+  \resizebox{\columnwidth}{!}{%
+  \begin{tabular}{llccccc}
+    \toprule
+    Model & Method & TP & FN & Acc & FNR & F1 \\
+    \midrule
+    \multirow{3}{*}{4B+Min}
+    & Baseline & 103 & 37 & 83.45\% & 26.43\% & 81.10\% \\
+    & Scout-ATR & 124 & 16 & 85.17\% & 11.43\% & 85.22\% \\
+    & \textbf{GT-ATR} & \textbf{138} & \textbf{2} & \textbf{95.52\%} & \textbf{1.43\%} & \textbf{95.50\%} \\
+    \midrule
+    \multirow{3}{*}{8B+Agg}
+    & Baseline & 95 & 45 & 82.41\% & 32.14\% & 78.84\% \\
+    & Scout-ATR & 112 & 28 & 85.52\% & 20.00\% & 84.21\% \\
+    & \textbf{GT-ATR} & \textbf{121} & \textbf{19} & \textbf{91.38\%} & \textbf{13.57\%} & \textbf{90.64\%} \\
+    \midrule
+    \multirow{3}{*}{32B+Neu}
+    & Baseline & 122 & 18 & 83.45\% & 12.86\% & 83.56\% \\
+    & Scout-ATR & 117 & 23 & 82.76\% & 16.43\% & 82.39\% \\
+    & GT-ATR & 100 & 40 & 75.86\% & 28.57\% & 74.07\% \\
+    \bottomrule
+  \end{tabular}}
+\end{table}
+
+\textbf{Analysis}:
+(1)~\textbf{Candidate evidence quality provides substantial headroom}: Under GT conditions, 4B achieves 95.52\% accuracy with only 2 missed detections out of 140 anomaly videos (FNR 1.43\%), and 8B reaches 91.38\%. The gap between Scout-ATR and GT-ATR (+10.35\% and +5.86\% respectively) quantifies the headroom available if the retrieved temporal evidence is improved. It does not imply that Scout is already a calibrated frame-level localizer.
+(2)~\textbf{Close-up conservatism in 32B}: Even with perfect GT windows, 32B accuracy \emph{drops} from 83.45\% to 75.86\% ($-$7.59\%). On anomaly videos alone, 32B recall falls from 87.14\% (Baseline) to 71.43\% (GT-ATR), indicating that the model classifies focused anomaly clips as normal more often than when viewing only the global video. Per-category analysis reveals the sharpest degradation on visually violent categories (RoadAccidents: 82.61\%$\rightarrow$39.13\%; Abuse: 100\%$\rightarrow$50\%), suggesting that the 32B Sniper's safety alignment may actively suppress anomaly recognition when presented with close-up evidence of sensitive content.
+(3)~Combined with Scout-stage conservatism (Section~\ref{sec:over_alignment}), these results reveal a \textbf{dual-stage compounding failure} for 32B that explains its consistently negative ATR gains.
+
+\subsection{Scout--GT Temporal Offset Diagnostic}
+\label{sec:scout_offset}
+
+The GT-anchored experiment measures an upper bound but not how free-form Scout timestamps align with the annotated core action. For each of the 140 anomaly videos in the standard test set, we select the Scout candidate nearest to any official GT interval and compute their signed temporal relation. A negative distance means the candidate ends before the GT interval; a positive distance means it starts after the GT interval. Percentages below are conditioned on anomaly videos where Scout returned at least one candidate.
+
+\begin{table}[t]
+  \centering
+  \caption{Scout candidate position relative to the nearest official GT interval. ``Before/overlap/after'' uses the original Scout timestamps.}
+  \label{tab:scout_offset}
+  \resizebox{\columnwidth}{!}{%
+  \begin{tabular}{lccccc}
+    \toprule
+    Config & Candidate videos & Before & Overlap & After & Median gap \\
+    \midrule
+    4B+Minimal & 126/140 & 91.3\% & 8.7\% & 0.0\% & $-$17.25\,s \\
+    8B+Aggressive & 138/140 & 91.3\% & 8.7\% & 0.0\% & $-$17.00\,s \\
+    32B+Neutral & 95/140 & 90.5\% & 9.5\% & 0.0\% & $-$21.00\,s \\
+    \bottomrule
+  \end{tabular}}
+\end{table}
+
+The offset is strongly directional rather than randomly distributed before and after the GT interval. Expanding Scout windows with the fixed contextual padding raises strict overlap to 13.5\%, 13.8\%, and 15.8\% for 4B, 8B, and 32B, respectively. This pattern is consistent with Scout often selecting pre-event context or assigning an early timestamp relative to the dataset's core-action annotation. It is not causal proof, and the low strict-overlap rates confirm that Scout timestamps should not be interpreted as precise temporal boundaries. Accordingly, our primary claim concerns semantic evidence retrieval for downstream video-level decisions, with GT-ATR serving as the candidate-quality upper bound.

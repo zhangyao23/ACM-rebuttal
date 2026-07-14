@@ -1,0 +1,53 @@
+\section{Related Work}
+
+\subsection{Video Anomaly Detection: From Signal Reconstruction to Semantic Understanding}
+
+Traditional Video Anomaly Detection (VAD) has evolved through two dominant paradigms.
+\textbf{Unsupervised methods} operate on the assumption that anomalies are deviations from learned normal patterns, using reconstruction or prediction errors as anomaly scores on benchmarks like ShanghaiTech~\cite{luo2017revisit}, Avenue~\cite{lu2013abnormal}, and UCSD Ped2~\cite{li2013anomaly}. Representative works include reconstruction-based and prediction-based approaches~\cite{gong2019memorizing,park2020learning,liu2018future}.
+\textbf{Weakly-supervised methods} leverage video-level labels with Multiple Instance Learning (MIL)~\cite{sultani2018real,tian2021weakly,lv2023unbiased,zhang2024mtfl}, with recent extensions incorporating feature refinement~\cite{feng2021mist,wan2021weakly,wu2022self} and language supervision~\cite{wu2024vadclip,gu2024anomalygpt,wu2024open}.
+
+These methods use task-specific supervision and usually optimize frame- or snippet-level ranking metrics. They are important localization baselines, but their supervision and output granularity differ from ATR's training-free video-level decision setting; we therefore discuss them as complementary rather than treating their reported frame-level scores as directly interchangeable with our metrics.
+
+\subsection{Explainable and Training-Free Video Anomaly Understanding}
+
+Recent VLM-based work extends VAD from anomaly scoring toward open-world description and explanation. HAWK~\cite{tang2024hawk} integrates motion-language supervision and trains on annotated anomaly descriptions and question--answer pairs. Holmes-VAU~\cite{zhang2024holmes} introduces multi-granular instruction data and an anomaly-focused temporal sampler for long-term understanding. VERA~\cite{ye2025vera} learns verbalized guiding questions from coarsely labeled data, while Follow the Rules (AnomalyRuler)~\cite{yang2024follow} induces scenario-specific rules from few-shot normal references before frame-level deduction. These methods are closely related in semantic scope, but use additional training data, learned components, or scenario references.
+
+Training-free methods remove model updates but still differ in evidence construction and output. LAVAD~\cite{zanella2024harnessing} converts sampled visual content into text and obtains frame-level anomaly scores through language reasoning, while VADTree~\cite{li2025vadtree} organizes multi-granularity event nodes for explainable frame-level scoring. ATR instead retrieves candidate evidence directly from the input video and jointly presents that visual evidence with the complete video for a video-level decision. It does not claim to replace calibrated frame-level localization methods.
+
+\begin{table*}[t]
+  \centering
+  \caption{Positioning against reviewer-identified related work. Reported scores are not mixed because supervision, task, and output granularity differ. ``Training-free'' here means no model-parameter update for the target task.}
+  \label{tab:setting_comparison}
+  \resizebox{\textwidth}{!}{%
+  \begin{tabular}{lllll}
+    \toprule
+    Method & Target setting & Target-task supervision & Primary output & Relation to ATR \\
+    \midrule
+    VideoAgent~\cite{wang2024videoagent} & Long-video QA & None at evaluation; multiple tools & Answer & Agentic search, not VAD \\
+    LITA~\cite{huang2024lita} & Temporal localization & Timestamped instruction tuning & Temporal span + text & Trained localizer \\
+    VadCLIP~\cite{wu2024vadclip} & Weakly supervised VAD & Video-level anomaly labels & Frame/snippet score & Different supervision \\
+    HAWK~\cite{tang2024hawk} & Open-world VAU & Anomaly-language and QA data & Description + QA & Trained semantic VAU \\
+    Holmes-VAU~\cite{zhang2024holmes} & Multi-granular VAU & Hierarchical instruction data & Frame/event/video text & Trained sampler + VLM \\
+    Follow the Rules~\cite{yang2024follow} & Explainable VAD & Few-shot normal references & Frame score + rules & Scenario-specific induction \\
+    VERA~\cite{ye2025vera} & Explainable VAD & Coarse labels for verbalized learning & Segment/frame score + text & Learned guiding questions \\
+    LAVAD~\cite{zanella2024harnessing} & Training-free VAD & None & Frame score & Caption-mediated reasoning \\
+    \textbf{ATR (ours)} & Training-free VAU & None; GT used only for diagnosis & Video decision + rationale & Direct visual dual view \\
+    \bottomrule
+  \end{tabular}}
+\end{table*}
+
+\subsection{Long-Form Video Understanding and the Attention Bottleneck}
+
+The emergence of Vision-Language Models (VLMs) has shifted the focus from anomaly \emph{detection} to \emph{understanding}.
+Foundational image-text models (CLIP~\cite{radford2021learning}, SigLIP~\cite{zhai2023sigmoid}) have enabled video-specific architectures like VideoMAE~\cite{tong2022videomae}, InternVideo~\cite{wang2022internvideo}, Video-LLaMA~\cite{zhang2023video}, VideoChat~\cite{li2025videochat}, and Video-LLaVA~\cite{lin2024video}. These models extend spatial understanding to the temporal domain, often using backbones like I3D~\cite{carreira2017quo}, Video Swin~\cite{liu2022video}, or ViViT~\cite{arnab2021vivit}. VideoAgent~\cite{wang2024videoagent} uses an LLM agent and auxiliary retrieval tools to iteratively search long videos for question answering, whereas LITA~\cite{huang2024lita} learns time tokens and SlowFast visual tokens from temporally annotated instruction data. They motivate selective temporal evidence processing, but target long-video QA or supervised temporal localization rather than zero-shot VAD.
+
+\textbf{The ``Needle-in-a-Haystack'' Challenge}: Applying these models to long surveillance videos exposes \textbf{attention dilution}: subtle anomalous cues can be overwhelmed by dominant background context under a limited visual-token budget. Caption-mediated pipelines can reduce visual load but may discard fine visual evidence. Frame-level AUC remains essential for temporal ranking, yet prior work also shows that it should not be the sole criterion for practical anomaly decisions~\cite{doshi2022rethinking,zhang2024holmes,pi2024vader}; event-level reasoning and semantic explanation measure different capabilities~\cite{chen2025ucvl}.
+
+\subsection{Visual RAG: Intra-Video Retrieval as a Solution}
+
+Retrieval-Augmented Generation (RAG)~\cite{lewis2020retrieval} was originally designed to enhance LLMs with external knowledge. Recent works have extended RAG to the visual domain (Visual RAG)~\cite{chen2022murag,caffagni2024wiki,yasunaga2022retrieval,hu2023reveal}, typically retrieving relevant images or clips from an external database. Efficient context techniques like StreamingLLM~\cite{xiao2023efficient} and RingAttention~\cite{liu2023ring} exist but do not inherently solve the semantic ``needle-in-a-haystack'' problem.
+In the anomaly detection domain, PANDA~\cite{yang2025panda} and SlowFastVAD~\cite{ding2025slowfastvad} employ RAG to retrieve anomaly-relevant knowledge from external databases for scene-aware strategy planning and domain-specific adaptation, respectively.
+
+Our work differs from these RAG-based methods in two key respects: (1)~retrieval is performed \emph{within} the input video rather than from an external corpus, and (2)~the retrieved segment is jointly reasoned with the full global view rather than replacing it. Unlike VADTree~\cite{li2025vadtree}, which decomposes videos into hierarchical event nodes for frame-level scoring, ATR targets video-level binary decisions via dual-view reasoning over globally scanned candidate intervals. In contrast to all these methods, ATR requires only a single VLM without auxiliary models (e.g., GEBD detectors or external knowledge bases), simplifying deployment.
+
+ATR's second visual view is also related to prompt re-reading. Prompt repetition in causal language models lets tokens in a later copy attend to the earlier copy, reducing order sensitivity without merely padding the input~\cite{leviathan2025prompt}. ATR does not duplicate the entire video; it re-presents only Scout-selected visual evidence next to the original video. This connection motivates the design, while our content ablations test whether relevance rather than added token volume explains the observed gains.
